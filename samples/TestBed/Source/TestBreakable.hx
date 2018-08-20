@@ -34,7 +34,7 @@ class TestBreakable extends Test{
 		public function new(){
 			super();
 			// Set Text field
-// 			Global.caption.text = "Breakable";
+// 			m_globalState.caption.text = "Breakable";
 			
 			m_world.setContactListener(new ContactListenerBreakable(this));
 			
@@ -71,9 +71,9 @@ class TestBreakable extends Test{
 			});
 		}
 		
-		override public function Update():Void 
+		override public function Update(_):Void 
 		{
-			super.Update();
+			super.Update(_);
 			if (m_break)
 			{
 				Break();

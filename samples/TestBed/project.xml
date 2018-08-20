@@ -4,11 +4,11 @@
 	<meta title="TestBed" package="org.openfl.box2d.testbed" version="1.0.0" company="OpenFL" />
 	<app main="Main" path="Export" file="TestBed" />
 	
-	<window width="640" height="360" unless="mobile" />
+	<window width="640" height="360" resizable="false" unless="mobile" fps="60" />
 	
 	<source path="Source" />
 	
-	<haxelib name="openfl" />
+	<haxelib name="lime" />
 	<haxelib name="box2d" />
 	
 	<assets path="Assets" rename="assets" exclude="openfl.svg" />

@@ -1,163 +1,112 @@
 package ;
-import box2D.dynamics.B2DebugDraw;
 
+import box2D.dynamics.B2DebugDrawFlag;
+import box2D.dynamics.IDebugDraw;
+import lime.app.Application;
+import lime.ui.KeyCode;
 
-import flash.events.Event;
-import flash.events.MouseEvent;
-import flash.events.KeyboardEvent;
+#if (openfl || flash || nme)
 import flash.Lib;
-import openfl.display.Sprite;
-import openfl.display.FPS;
-import openfl.text.TextField;
+import box2D.dynamics.B2FlashDebugDraw;
+#elseif lime_cairo
+import box2D.dynamics.B2CairoDebugDraw;
+import CairoGLStack;
+#end
 
 /**
  * ...
  * @author Najm
+ * @author jsachs
  */
 
-class Main extends Sprite 
+class Main extends Application 
 {
-	var inited:Bool;
+	override public function onPreloadComplete() {
+		super.onPreloadComplete();
 
-	/* ENTRY POINT */
-	
-	function resize(e) 
-	{
-		if (!inited) init();
-		// else (resize or orientation change)
-	}
-	
-	function onEnterFrame(e:Event)
-	{
-		test.Update();
+		inputState = new InputState();
 
-		if(Input.lastKey==32/*spacebar*/)
-			{
-				Input.lastKey = 0;
-				cur_test_ind++;
-				if (cur_test_ind==test_list.length)
-				{
-					cur_test_ind = 0;
-				}
-
-				test = test_list[cur_test_ind];
-				Global.caption.text = test_name[cur_test_ind].toString();
-			}
-
-	}
-	
-	var pressed_count:UInt = 0;
-	var test:Dynamic;
-	var test_list:Array<Dynamic> = new Array();
-	var test_name:Array<String> = new Array();
-	var cur_test_ind:Int = 0;
-	
-	function init() 
-	{
-		if (inited) return;
-		inited = true;
-		
- 		Global.game_width = stage.stageWidth;
- 		Global.game_height = stage.stageHeight;
-		
-		Global.world_sprite = this;
-		
-		// set caption
-		Global.caption.y = 10;
-		Global.caption.x = 200;
-		Global.caption.width = 300;
-		
-		addChild(Global.caption);
-		
-		var next_test_caption:TextField = new TextField();
-		next_test_caption.y = 50;
-		next_test_caption.x = 10;
-		next_test_caption.width = 300;
-		next_test_caption.text = "PRESS SPACEBAR FOR NEXT TEST";
-		addChild(next_test_caption);
-		
-		var del_object_caption:TextField = new TextField();
-		del_object_caption.y = 70;
-		del_object_caption.x = 10;
-		del_object_caption.width = 300;
-		del_object_caption.text = "CLICK & PRESS 'D' TO DELETE OBJECTS";
-		addChild(del_object_caption);
-		
-		// show frame per second
-		addChild(new FPS());
-		
-		// take care of mouse & keyboard event
-		var input:Input = new Input(this);
-		
- 		test_list.push(new TestBridge());
-		test_name.push("Bridge Test");
-		
- 		test_list.push(new TestCCD());
-		test_name.push("Contious Collision Detection Test");
-		
- 		test_list.push(new TestCrankGearsPulley());
-		test_name.push("Crank Gears Pulley Test");
-		
- 		test_list.push(new TestRagdoll());
-		test_name.push("Rag Doll Test");
-		
- 		test_list.push(new TestStack());
-		test_name.push("Stack Test");
-		
- 		test_list.push(new TestTheoJansen());
-		test_name.push("Theo Jansen Test");
-		
-		test_list.push(new TestRaycast());
-		test_name.push("Ray Cast Test");
-		
-		test_list.push(new TestOneSidedPlatform());
-		test_name.push("One Sided Platform Test");
-		
-		test_list.push(new TestBreakable());
-		test_name.push("Breakable Test");
-		
-		test_list.push(new TestCompound());
-		test_name.push("Compound Test");
-		
- 		test_list.push(new TestBuoyancy()); //hangs on load
-		test_name.push("Buoyancy Test");
-		
-		// show 1st example
-		test = test_list[test_list.length-1];
-		
-		addEventListener(Event.ENTER_FRAME,onEnterFrame);
-		// Stage:
-		// stage.stageWidth x stage.stageHeight @ stage.dpiScale
-		
-		// Assets:
-		// nme.Assets.getBitmapData("img/assetname.jpg");
-	}
-	
-
-	/* SETUP */
-
-	public function new() 
-	{
-		super();	
-		addEventListener(Event.ADDED_TO_STAGE, added);
-	}
-
-	function added(e) 
-	{
-		removeEventListener(Event.ADDED_TO_STAGE, added);
-		stage.addEventListener(Event.RESIZE, resize);
-		#if ios
-		haxe.Timer.delay(init, 100); // iOS 6
-		#else
-		init();
+		#if (openfl || flash || nme) 
+		var flashDebugDraw = new B2FlashDebugDraw();
+		flashDebugDraw.setSprite(Lib.current);
+		debugDraw = flashDebugDraw;
+		#elseif lime_cairo
+		cairoGL = new CairoGLStack();
+		cairoGL.setSize(window.width, window.height);
+		var cairoDebugDraw = new B2CairoDebugDraw();
+		cairoDebugDraw.setCairo(cairoGL.cairo);
+		debugDraw = cairoDebugDraw;
 		#end
+
+		if (debugDraw != null) {
+			debugDraw.setDrawScale(30.0);
+			debugDraw.setFillAlpha(0.3);
+			debugDraw.setLineThickness(1.0);
+			debugDraw.setFlags(B2DebugDrawFlag.Shapes | B2DebugDrawFlag.Joints);
+		}
+
+		addTest(new TestBridge(), "Bridge Test");
+		addTest(new TestCCD(), "Contious Collision Detection Test");
+		addTest(new TestCrankGearsPulley(), "Crank Gears Pulley Test");
+		addTest(new TestRagdoll(), "Rag Doll Test");
+		addTest(new TestStack(), "Stack Test");
+		addTest(new TestTheoJansen(), "Theo Jansen Test");
+		addTest(new TestRaycast(), "Ray Cast Test");
+		addTest(new TestOneSidedPlatform(), "One Sided Platform Test");
+		addTest(new TestBreakable(), "Breakable Test");
+		addTest(new TestCompound(), "Compound Test");
+		addTest(new TestBuoyancy(), "Buoyancy Test"); //hangs on load
+
+		trace("PRESS SPACEBAR FOR NEXT TEST");
+		trace("CLICK & PRESS 'D' TO DELETE OBJECTS");
+		currentIndex = tests.length;
+		showNextTest();
+	}
+
+	override public function update(milliseconds) {
+		if (test != null) {
+			var delta = milliseconds / 1000;
+			delta = 1 / frameRate; // forces time step to be uniform; optional of course
+			test.Update(delta);
+		}
+	}
+
+	#if lime_cairo override public function render(_) cairoGL.render(); #end
+	
+	override public function onKeyUp(_, code, _) {
+		inputState.keysDown[code] = false;
+		if (code == KeyCode.SPACE) showNextTest();
+	}
+
+	override public function onKeyDown(_, code, _) inputState.keysDown[code] = true;
+	
+	override public function onMouseMove(_, x, y) {
+		inputState.mouseX = x;
+		inputState.mouseY = y;
 	}
 	
-	public static function main() 
-	{
-		// static entry point
-		Lib.current.stage.align = flash.display.StageAlign.TOP_LEFT;
-		Lib.current.stage.scaleMode = flash.display.StageScaleMode.NO_SCALE;
-		Lib.current.addChild(new Main());
+	override public function onMouseDown(_, x, y, button) inputState.mouseDown = true;
+	
+	override public function onMouseUp(_, x, y, button) inputState.mouseDown = false;
+	
+	function addTest(test:Test, name:String) {
+		test.m_name = name;
+		if (debugDraw != null) test.SetDebugDraw(debugDraw);
+		test.m_inputState = inputState;
+		tests.push(test);
 	}
+
+	function showNextTest() {
+		currentIndex++;
+		if (currentIndex > tests.length - 1) currentIndex = 0;
+		test = tests[currentIndex];
+		trace(test.m_name);
+	}
+
+	var test:Test;
+	var tests:Array<Test> = [];
+	var currentIndex:Int = 0;
+	var inputState:InputState;
+	var debugDraw:IDebugDraw;
+	#if lime_cairo var cairoGL:CairoGLStack; #end
 }

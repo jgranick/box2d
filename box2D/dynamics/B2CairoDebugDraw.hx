@@ -23,8 +23,9 @@ import box2D.common.math.B2Transform;
 import box2D.common.math.B2Vec2;
 import box2D.common.B2Color;
 
-#if (openfl || flash || nme)
-import flash.display.Sprite;
+#if lime_cairo
+import lime.graphics.cairo.Cairo;
+import lime.graphics.cairo.CairoOperator;
 #end
 
 
@@ -32,7 +33,7 @@ import flash.display.Sprite;
 * Implement and register this class with a b2World to provide debug drawing of physics
 * entities in your game.
 */
-class B2DebugDraw
+class B2CairoDebugDraw implements IDebugDraw
 {
 
 	public function new () {
@@ -48,23 +49,15 @@ class B2DebugDraw
 		m_drawFlags = 0;
 	}
 
-	//virtual ~b2DebugDraw() {}
-
-	//enum
-	//{
-	/** Draw shapes */
-	static public var e_shapeBit:Int 			= 0x0001;
-	/** Draw joint connections */
-	static public var e_jointBit:Int			= 0x0002;
-	/** Draw axis aligned bounding boxes */
-	static public var e_aabbBit:Int			= 0x0004;
-	/** Draw broad-phase pairs */
-	static public var e_pairBit:Int			= 0x0008;
-	/** Draw center of mass frame */
-	static public var e_centerOfMassBit:Int	= 0x0010;
-	/** Draw controllers */
-	static public var e_controllerBit:Int		= 0x0020;
-	//};
+	public function clear() {
+		#if lime_cairo
+		m_cairo.save();
+		m_cairo.setSourceRGBA(1, 1, 1, 1);
+		m_cairo.operator = CairoOperator.SOURCE;
+		m_cairo.paint();
+		m_cairo.restore();
+		#end
+	}
 
 	/**
 	* Set the drawing flags.
@@ -94,19 +87,19 @@ class B2DebugDraw
 		m_drawFlags &= ~flags;
 	}
 
-	#if (openfl || flash || nme)
+	#if lime_cairo
 	/**
-	* Set the sprite
+	* Set the cairo
 	*/
-	public function setSprite(sprite:Sprite) : Void {
-		m_sprite = sprite; 
+	public function setCairo(cairo:Cairo) : Void {
+		m_cairo = cairo; 
 	}
 	
 	/**
-	* Get the sprite
+	* Get the cairo
 	*/
-	public function getSprite() : Sprite {
-		return m_sprite;
+	public function getCairo() : Cairo {
+		return m_cairo;
 	}
 	#end
 	
@@ -185,13 +178,14 @@ class B2DebugDraw
 	*/
 	public function drawPolygon(vertices:Array <B2Vec2>, vertexCount:Int, color:B2Color) : Void{
 		
-		#if (openfl || flash || nme)
-		m_sprite.graphics.lineStyle(m_lineThickness, color.color, m_alpha);
-		m_sprite.graphics.moveTo(vertices[0].x * m_drawScale, vertices[0].y * m_drawScale);
+		#if lime_cairo
+		m_cairo.moveTo(vertices[0].x * m_drawScale, vertices[0].y * m_drawScale);
 		for (i in 1...vertexCount){
-				m_sprite.graphics.lineTo(vertices[i].x * m_drawScale, vertices[i].y * m_drawScale);
+				m_cairo.lineTo(vertices[i].x * m_drawScale, vertices[i].y * m_drawScale);
 		}
-		m_sprite.graphics.lineTo(vertices[0].x * m_drawScale, vertices[0].y * m_drawScale);
+		m_cairo.lineTo(vertices[0].x * m_drawScale, vertices[0].y * m_drawScale);
+		style(m_lineThickness, color.color, m_alpha);
+		m_cairo.stroke();
 		#end
 		
 	}
@@ -201,15 +195,16 @@ class B2DebugDraw
 	*/
 	public function drawSolidPolygon(vertices:Array <B2Vec2>, vertexCount:Int, color:B2Color) : Void{
 		
-		#if (openfl || flash || nme)
-		m_sprite.graphics.lineStyle(m_lineThickness, color.color, m_alpha);
-		m_sprite.graphics.moveTo(vertices[0].x * m_drawScale, vertices[0].y * m_drawScale);
-		m_sprite.graphics.beginFill(color.color, m_fillAlpha);
+		#if lime_cairo
+		m_cairo.moveTo(vertices[0].x * m_drawScale, vertices[0].y * m_drawScale);
 		for (i in 1...vertexCount){
-				m_sprite.graphics.lineTo(vertices[i].x * m_drawScale, vertices[i].y * m_drawScale);
+				m_cairo.lineTo(vertices[i].x * m_drawScale, vertices[i].y * m_drawScale);
 		}
-		m_sprite.graphics.lineTo(vertices[0].x * m_drawScale, vertices[0].y * m_drawScale);
-		m_sprite.graphics.endFill();
+		m_cairo.lineTo(vertices[0].x * m_drawScale, vertices[0].y * m_drawScale);
+		style(m_lineThickness, color.color, m_fillAlpha);
+		m_cairo.fillPreserve();
+		style(m_lineThickness, color.color, m_alpha);
+		m_cairo.stroke();
 		#end
 		
 	}
@@ -219,9 +214,10 @@ class B2DebugDraw
 	*/
 	public function drawCircle(center:B2Vec2, radius:Float, color:B2Color) : Void{
 		
-		#if (openfl || flash || nme)
-		m_sprite.graphics.lineStyle(m_lineThickness, color.color, m_alpha);
-		m_sprite.graphics.drawCircle(center.x * m_drawScale, center.y * m_drawScale, radius * m_drawScale);
+		#if lime_cairo
+		constructCircle(center.x * m_drawScale, center.y * m_drawScale, radius * m_drawScale);
+		style(m_lineThickness, color.color, m_alpha);
+		m_cairo.stroke();
 		#end
 		
 	}
@@ -231,14 +227,16 @@ class B2DebugDraw
 	*/
 	public function drawSolidCircle(center:B2Vec2, radius:Float, axis:B2Vec2, color:B2Color) : Void{
 		
-		#if (openfl || flash || nme)
-		m_sprite.graphics.lineStyle(m_lineThickness, color.color, m_alpha);
-		m_sprite.graphics.moveTo(0,0);
-		m_sprite.graphics.beginFill(color.color, m_fillAlpha);
-		m_sprite.graphics.drawCircle(center.x * m_drawScale, center.y * m_drawScale, radius * m_drawScale);
-		m_sprite.graphics.endFill();
-		m_sprite.graphics.moveTo(center.x * m_drawScale, center.y * m_drawScale);
-		m_sprite.graphics.lineTo((center.x + axis.x * radius) * m_drawScale, (center.y + axis.y * radius) * m_drawScale);
+		#if lime_cairo
+		m_cairo.moveTo(0,0);
+		constructCircle(center.x * m_drawScale, center.y * m_drawScale, radius * m_drawScale);
+		style(m_lineThickness, color.color, m_fillAlpha);
+		m_cairo.fillPreserve();
+		style(m_lineThickness, color.color, m_alpha);
+		m_cairo.stroke();
+		m_cairo.moveTo(center.x * m_drawScale, center.y * m_drawScale);
+		m_cairo.lineTo((center.x + axis.x * radius) * m_drawScale, (center.y + axis.y * radius) * m_drawScale);
+		m_cairo.stroke();
 		#end
 		
 	}
@@ -249,10 +247,11 @@ class B2DebugDraw
 	*/
 	public function drawSegment(p1:B2Vec2, p2:B2Vec2, color:B2Color) : Void{
 		
-		#if (openfl || flash || nme)
-		m_sprite.graphics.lineStyle(m_lineThickness, color.color, m_alpha);
-		m_sprite.graphics.moveTo(p1.x * m_drawScale, p1.y * m_drawScale);
-		m_sprite.graphics.lineTo(p2.x * m_drawScale, p2.y * m_drawScale);
+		#if lime_cairo
+		m_cairo.moveTo(p1.x * m_drawScale, p1.y * m_drawScale);
+		m_cairo.lineTo(p2.x * m_drawScale, p2.y * m_drawScale);
+		style(m_lineThickness, color.color, m_alpha);
+		m_cairo.stroke();
 		#end
 		
 	}
@@ -263,23 +262,40 @@ class B2DebugDraw
 	*/
 	public function drawTransform(xf:B2Transform) : Void{
 		
-		#if (openfl || flash || nme)
-		m_sprite.graphics.lineStyle(m_lineThickness, 0xff0000, m_alpha);
-		m_sprite.graphics.moveTo(xf.position.x * m_drawScale, xf.position.y * m_drawScale);
-		m_sprite.graphics.lineTo((xf.position.x + m_xformScale*xf.R.col1.x) * m_drawScale, (xf.position.y + m_xformScale*xf.R.col1.y) * m_drawScale);
+		#if lime_cairo
+		m_cairo.moveTo(xf.position.x * m_drawScale, xf.position.y * m_drawScale);
+		m_cairo.lineTo((xf.position.x + m_xformScale*xf.R.col1.x) * m_drawScale, (xf.position.y + m_xformScale*xf.R.col1.y) * m_drawScale);
+		style(m_lineThickness, 0xff0000, m_alpha);
+		m_cairo.stroke();
 		
-		m_sprite.graphics.lineStyle(m_lineThickness, 0x00ff00, m_alpha);
-		m_sprite.graphics.moveTo(xf.position.x * m_drawScale, xf.position.y * m_drawScale);
-		m_sprite.graphics.lineTo((xf.position.x + m_xformScale * xf.R.col2.x) * m_drawScale, (xf.position.y + m_xformScale * xf.R.col2.y) * m_drawScale);
+		m_cairo.moveTo(xf.position.x * m_drawScale, xf.position.y * m_drawScale);
+		m_cairo.lineTo((xf.position.x + m_xformScale * xf.R.col2.x) * m_drawScale, (xf.position.y + m_xformScale * xf.R.col2.y) * m_drawScale);
+		style(m_lineThickness, 0x00ff00, m_alpha);
+		m_cairo.stroke();
 		#end
 		
 	}
 	
-	
+	inline static var c = 0.55;
+	function constructCircle(x:Float, y:Float, rad:Float) {
+		m_cairo.moveTo (x + 0 * rad, y + 1 * rad);
+		m_cairo.curveTo(x + c * rad, y + 1 * rad, x + 1 * rad, y + c * rad, x + 1 * rad, y + 0 * rad);
+		m_cairo.curveTo(x + 1 * rad, y - c * rad, x + c * rad, y - 1 * rad, x + 0 * rad, y - 1 * rad);
+		m_cairo.curveTo(x - c * rad, y - 1 * rad, x - 1 * rad, y - c * rad, x - 1 * rad, y + 0 * rad);
+		m_cairo.curveTo(x - 1 * rad, y + c * rad, x - c * rad, y + 1 * rad, x + 0 * rad, y + 1 * rad);
+	}
+
+	function style(lineThickness, color, alpha) {
+		m_cairo.lineWidth = lineThickness;
+		var r = ((color >> 16) & 0xFF) / 0xFF;
+		var g = ((color >>  8) & 0xFF) / 0xFF;
+		var b = ((color >>  0) & 0xFF) / 0xFF;
+		m_cairo.setSourceRGBA(r, g, b, alpha);
+	}
 	
 	private var m_drawFlags:Int;
-	#if (openfl || flash || nme)
-	public var m_sprite:Sprite;
+	#if lime_cairo
+	public var m_cairo:Cairo;
 	#end
 	private var m_drawScale:Float;
 	

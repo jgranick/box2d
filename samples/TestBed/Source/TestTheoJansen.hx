@@ -15,6 +15,8 @@
 * misrepresented as being the original software.
 * 3. This notice may not be removed or altered from any source distribution.
 */
+
+import lime.ui.KeyCode;
 import box2D.dynamics.*;
 import box2D.collision.*;
 import box2D.collision.shapes.*;
@@ -24,8 +26,6 @@ import box2D.common.*;
 import box2D.common.math.*;
 
 import box2D.dynamics.B2Body;
-	// Input
-// 	import General.Input;
 
 
 class TestTheoJansen extends Test {
@@ -213,31 +213,27 @@ class TestTheoJansen extends Test {
 	
 	
 	
-	public override function Update():Void{
+	public override function Update(_):Void{
 		
-		//case 'a':
-		if (Input.isKeyPressed(65)){ // A
+		if (m_inputState.keysDown[KeyCode.A]){
 			m_chassis.setAwake(true);
 			m_motorJoint.setMotorSpeed(-m_motorSpeed);
 		}
-		//case 's':
-		if (Input.isKeyPressed(83)){ // S
+		if (m_inputState.keysDown[KeyCode.S]){
 			m_chassis.setAwake(true);
 			m_motorJoint.setMotorSpeed(0.0);
 		}
-		//case 'd':
-		if (Input.isKeyPressed(68)){ // D
+		if (m_inputState.keysDown[KeyCode.D]){
 			m_chassis.setAwake(true);
 			m_motorJoint.setMotorSpeed(m_motorSpeed);
 		}
-		//case 'm':
-		if (Input.isKeyPressed(77)){ // M
+		if (m_inputState.keysDown[KeyCode.M]){
 			m_chassis.setAwake(true);
 			m_motorJoint.enableMotor(!m_motorJoint.isMotorEnabled());
 		}
 		
 		// Finally update super class
-		super.Update();
+		super.Update(_);
 	}
 	
 	

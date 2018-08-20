@@ -74,8 +74,8 @@ class TestRaycast extends Test{
 		// Member Data 
 		//======================
 		
-		public override function Update():Void{
-			super.Update();
+		public override function Update(_):Void{
+			super.Update(_);
 			
 			var p1:B2Vec2 = laser.getWorldPoint(new B2Vec2(30.1 / m_physScale, 0));
 			var p2:B2Vec2 = laser.getWorldPoint(new B2Vec2(130.1 / m_physScale, 0));
@@ -89,11 +89,13 @@ class TestRaycast extends Test{
 				f.rayCast(output, input);
 				lambda = output.fraction;
 			}
-			m_sprite.graphics.lineStyle(1,0xff0000,1);
-			m_sprite.graphics.moveTo(p1.x * m_physScale, p1.y * m_physScale);
-			m_sprite.graphics.lineTo( 	(p2.x * lambda + (1 - lambda) * p1.x) * m_physScale,
-										(p2.y * lambda + (1 - lambda) * p1.y) * m_physScale);
 
+			var p3 = new B2Vec2(
+				(p2.x * lambda + (1 - lambda) * p1.x),
+				(p2.y * lambda + (1 - lambda) * p1.y)
+			);
+
+			m_debugDraw.drawSegment(p1, p3, new B2Color(1, 0, 0));
 		}
 	}
 	
